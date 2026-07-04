@@ -790,7 +790,7 @@
         // la sincronización en la nube. Mientras diga "AQUI_VA_MI_LINK"
         // la app funcionará solo en modo local (localStorage).
         // =======================================================
-        const API_URL = "https://docs.google.com/spreadsheets/d/1uvuXEieqM7E3YGY7i0PhpEmoiKChUZQuDCHl6wilyUE/edit?usp=sharing";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyrRuvm_svbVjuMLDdkDs6e4uS663wBi_uBopknpS6_X_3V_iyt679pf-bspsrcB175/exec";
 
         const MOTIVO_TERMINO = "Término de labores";
 
@@ -908,7 +908,7 @@
             const dot = document.getElementById('syncStatusDot');
             const text = document.getElementById('syncStatusText');
 
-            if (API_URL && API_URL !== "https://docs.google.com/spreadsheets/d/1uvuXEieqM7E3YGY7i0PhpEmoiKChUZQuDCHl6wilyUE/edit?usp=sharing") {
+            if (API_URL && API_URL !== "https://script.google.com/macros/s/AKfycbyrRuvm_svbVjuMLDdkDs6e4uS663wBi_uBopknpS6_X_3V_iyt679pf-bspsrcB175/exec") {
                 dot.classList.add('connected');
                 text.textContent = "Sheets Sincronizado";
                 badge.setAttribute('title', 'La aplicación está conectada con Google Apps Script.');
