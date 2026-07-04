@@ -1,0 +1,2355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Profesional de Gestión de Flota</title>
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- html2pdf.js CDN para exportar reportes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        /* ==========================================================================
+           VARIABLES DE DISEÑO Y CONFIGURACIÓN DE COLORES
+           ========================================================================== */
+        :root {
+            --color-primary: #1e40af;       /* Azul Oscuro */
+            --color-primary-hover: #1d4ed8; /* Azul Brillante */
+            --color-secondary: #3b82f6;     /* Azul Claro */
+            --color-bg-light: #f8fafc;      /* Gris Muy Claro */
+            --color-card-bg: #ffffff;       /* Blanco */
+            --color-text-main: #1e293b;     /* Gris Oscuro / Negro */
+            --color-text-muted: #64748b;    /* Gris Muted */
+            --color-border: #e2e8f0;        /* Gris de Borde */
+            --color-success: #10b981;       /* Verde */
+            --color-warning: #f59e0b;       /* Amarillo / Naranja */
+            --color-warning-light: #fef3c7; /* Amarillo Suave para Fondos */
+            --color-warning-border: #f59e0b;
+            --color-danger: #ef4444;        /* Rojo */
+            --font-family: 'Inter', sans-serif;
+            --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* ==========================================================================
+           ESTILOS BASE Y RESET
+           ========================================================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--color-bg-light);
+            color: var(--color-text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Contenedor Principal */
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* ==========================================================================
+           HEADER DEL SISTEMA
+           ========================================================================== */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 1.5rem;
+        }
+
+        .header-title h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-title p {
+            color: var(--color-text-muted);
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        .status-badge-cloud {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            gap: 0.5rem;
+            background-color: var(--color-card-bg);
+            border: 1px solid var(--color-border);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--color-danger);
+            display: inline-block;
+        }
+
+        .status-dot.connected {
+            background-color: var(--color-success);
+        }
+
+        /* ==========================================================================
+           MENÚ DE NAVEGACIÓN (TABS / PANTALLAS)
+           ========================================================================== */
+        .navigation-tabs {
+            display: flex;
+            background-color: var(--color-card-bg);
+            border: 1px solid var(--color-border);
+            border-radius: 0.75rem;
+            padding: 0.4rem;
+            margin-bottom: 2rem;
+            gap: 0.25rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .nav-tab {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            background: none;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .nav-tab:hover {
+            color: var(--color-primary);
+            background-color: #eff6ff;
+        }
+
+        .nav-tab.active {
+            color: white;
+            background-color: var(--color-primary);
+        }
+
+        /* Estructura de Pantallas */
+        .app-screen {
+            display: none;
+        }
+
+        .app-screen.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ==========================================================================
+           TARJETAS DE ESTADÍSTICAS (STAT CARDS)
+           ========================================================================== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background-color: var(--color-card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: var(--transition-smooth);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-info h3 {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-info .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--color-text-main);
+        }
+
+        .stat-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-blue {
+            background-color: #eff6ff;
+            color: var(--color-secondary);
+        }
+
+        .icon-yellow {
+            background-color: #fef3c7;
+            color: var(--color-warning);
+        }
+
+        .icon-green {
+            background-color: #ecfdf5;
+            color: var(--color-success);
+        }
+
+        /* ==========================================================================
+           PANELES Y CONTENEDORES
+           ========================================================================== */
+        .content-panel {
+            background-color: var(--color-card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--color-border);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .panel-title {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Botonera */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--color-primary-hover);
+        }
+
+        .btn-success {
+            background-color: var(--color-success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            opacity: 0.9;
+        }
+
+        .btn-danger {
+            background-color: var(--color-danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background-color: var(--color-card-bg);
+            color: var(--color-text-main);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--color-bg-light);
+        }
+
+        /* ==========================================================================
+           FORMULARIOS, INPUTS Y SELECTORES
+           ========================================================================== */
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--color-text-muted);
+        }
+
+        .form-control {
+            padding: 0.65rem 0.85rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--color-border);
+            font-family: var(--font-family);
+            font-size: 0.9rem;
+            outline: none;
+            background-color: #ffffff;
+            transition: var(--transition-smooth);
+            width: 100%;
+        }
+
+        .form-control:focus {
+            border-color: var(--color-secondary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .form-control[readonly] {
+            background-color: var(--color-bg-light);
+            cursor: not-allowed;
+            color: var(--color-text-muted);
+        }
+
+        /* ==========================================================================
+           SISTEMA DE SELECCIÓN DE PASAJEROS RÁPIDA (CON CLICK)
+           ========================================================================== */
+        .passenger-quick-select-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .passenger-quick-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            background-color: var(--color-bg-light);
+            border: 1px solid var(--color-border);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .passenger-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background-color: #ffffff;
+            border: 1px solid var(--color-border);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            user-select: none;
+            transition: var(--transition-smooth);
+        }
+
+        .passenger-item:hover {
+            border-color: var(--color-secondary);
+            background-color: #eff6ff;
+        }
+
+        .passenger-item.selected {
+            background-color: #eff6ff;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.1);
+        }
+
+        .passenger-item input[type="checkbox"] {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            accent-color: var(--color-primary);
+        }
+
+        .passenger-item-name {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--color-text-main);
+        }
+
+        /* ==========================================================================
+           LISTAS DE DATOS EN LA PESTAÑA DE GESTIÓN
+           ========================================================================== */
+        .list-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .list-card {
+            background-color: var(--color-card-bg);
+            border: 1px solid var(--color-border);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+        }
+
+        .list-card-header {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--color-primary);
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 0.75rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .data-list-scroller {
+            max-height: 250px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding-right: 0.25rem;
+        }
+
+        .data-row-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--color-bg-light);
+            border: 1px solid var(--color-border);
+            padding: 0.65rem 0.85rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .data-row-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .data-row-title {
+            font-weight: 600;
+            color: var(--color-text-main);
+        }
+
+        .data-row-subtitle {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+        }
+
+        .btn-icon-del {
+            background: none;
+            border: none;
+            color: var(--color-danger);
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-icon-del:hover {
+            background-color: #fee2e2;
+        }
+
+        /* ==========================================================================
+           TABLAS MODERNAS
+           ========================================================================== */
+        .table-responsive {
+            overflow-x: auto;
+            width: 100%;
+            border-radius: 0.5rem;
+            border: 1px solid var(--color-border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        th {
+            background-color: var(--color-bg-light);
+            padding: 1rem 1.25rem;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            border-bottom: 1px solid var(--color-border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--color-border);
+            vertical-align: middle;
+            color: var(--color-text-main);
+            white-space: nowrap;
+        }
+
+        tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        /* Badges de Estado */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-disponible {
+            background-color: #ecfdf5;
+            color: #065f46;
+        }
+
+        .badge-ruta {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        /* Chips de Pasajeros en Tabla */
+        .pasajeros-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            max-width: 250px;
+        }
+
+        .pasajero-chip {
+            background-color: #f1f5f9;
+            color: #334155;
+            padding: 0.15rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: 1px solid var(--color-border);
+        }
+
+        /* ==========================================================================
+           SISTEMA DE MODALES Y ALERTAS
+           ========================================================================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-box {
+            background-color: var(--color-card-bg);
+            border-radius: 1rem;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--color-border);
+            transform: scale(0.95);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-overlay.active .modal-box {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--color-bg-light);
+        }
+
+        .modal-header h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--color-text-muted);
+            transition: var(--transition-smooth);
+        }
+
+        .modal-close:hover {
+            color: var(--color-danger);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid var(--color-border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            background-color: var(--color-bg-light);
+        }
+
+        /* Caja de Alerta Informativa de Km */
+        .alert-box {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            margin-bottom: 1.25rem;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .alert-warning {
+            background-color: var(--color-warning-light);
+            border-left: 4px solid var(--color-warning-border);
+            color: #92400e;
+        }
+
+        .alert-success {
+            background-color: #ecfdf5;
+            border-left: 4px solid var(--color-success);
+            color: #065f46;
+        }
+
+        /* Contenedor de Toasts */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1100;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-width: 350px;
+            width: 100%;
+        }
+
+        .toast {
+            background-color: var(--color-card-bg);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--color-border);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            transform: translateX(120%);
+            transition: transform 0.25s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-success { border-left: 4px solid var(--color-success); }
+        .toast-danger { border-left: 4px solid var(--color-danger); }
+        .toast-warning { border-left: 4px solid var(--color-warning); }
+
+        .toast-content { flex-grow: 1; }
+        .toast-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.15rem; }
+        .toast-msg { font-size: 0.8rem; color: var(--color-text-muted); }
+
+        /* ==========================================================================
+           DISEÑO RESPONSIVE Y NO-PRINT PARA EXPORTACIONES
+           ========================================================================== */
+        @media (max-width: 768px) {
+            .dashboard-container { padding: 1rem 0.75rem; }
+            .navigation-tabs { flex-direction: column; }
+            .form-grid-2 { grid-template-columns: 1fr; }
+            .panel-header { flex-direction: column; align-items: stretch; }
+            header { flex-direction: column; align-items: flex-start; }
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <!-- HEADER -->
+        <header>
+            <div class="header-title">
+                <h1>
+                    <!-- Icono SVG de Vehículo -->
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M13 17H9"/><path d="M13 11V7"/></svg>
+                    Control de ingreso y salida de vehículos
+                </h1>
+                <p>Gestión automatizada de ingreso y salida vehícular</p>
+            </div>
+            
+            <!-- Estado de conexión con Google Sheets -->
+            <div class="status-badge-cloud" id="syncStatusBadge">
+                <span class="status-dot" id="syncStatusDot"></span>
+                <span id="syncStatusText">Cargando modo...</span>
+            </div>
+
+            <!-- Estado de sesión / acceso de edición -->
+            <div class="status-badge-cloud" id="sesionBadge" style="cursor: default;">
+                <span class="status-dot" id="sesionDot"></span>
+                <span id="sesionText">Solo Lectura</span>
+                <button id="btnSesionAccion" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; margin-left: 0.25rem;">Iniciar sesión</button>
+            </div>
+        </header>
+
+        <!-- PESTAÑAS DE NAVEGACIÓN (MENÚ TIPO PANTALLA) -->
+        <nav class="navigation-tabs no-print">
+            <button class="nav-tab active" id="tab-btn-operaciones" onclick="switchTab('operaciones')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                Operaciones de Ruta
+            </button>
+            <button class="nav-tab" id="tab-btn-historial" onclick="switchTab('historial')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Bitácora de Historial
+            </button>
+            <button class="nav-tab" id="tab-btn-gestion" onclick="switchTab('gestion')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                Gestión de Datos
+            </button>
+        </nav>
+
+        <!-- TARJETAS DE ESTADÍSTICAS GLOBALES -->
+        <div class="stats-grid no-print">
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Total Viajes</h3>
+                    <div class="stat-value" id="statTotalViajes">0</div>
+                </div>
+                <div class="stat-icon-wrapper icon-blue">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Vehículo en Ruta</h3>
+                    <div class="stat-value" id="statEnRuta">0</div>
+                </div>
+                <div class="stat-icon-wrapper icon-yellow">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Km Totales</h3>
+                    <div class="stat-value" id="statKmRecorridos">0 km</div>
+                </div>
+                <div class="stat-icon-wrapper icon-green">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ==========================================================================
+           PANTALLA 1: OPERACIONES DE RUTA
+           ========================================================================== -->
+        <div class="app-screen active" id="screen-operaciones">
+            <div class="content-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.5 2h-13C4.7 2 4 2.7 4 3.5v17c0 .8.7 1.5 1.5 1.5h13c.8 0 1.5-.7 1.5-1.5v-17c0-.8-.7-1.5-1.5-1.5z"/><path d="M12 2v20"/><path d="m8 8 4 4 4-4"/></svg>
+                        Vehículo en Tránsito y Acciones Rápidas
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" onclick="openModalSalida()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                            Registrar Salida de Vehículo
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Vehículo</th>
+                                <th>Conductor</th>
+                                <th>Destino</th>
+                                <th>Motivo</th>
+                                <th>Pasajeros</th>
+                                <th>Hora de Salida</th>
+                                <th>Km Inicial</th>
+                                <th>Estado</th>
+                                <th style="text-align: right;">Acciones de Entrada</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBodyRutasActivas">
+                            <!-- Datos generados por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ==========================================================================
+           PANTALLA 2: BITÁCORA DE HISTORIAL
+           ========================================================================== -->
+        <div class="app-screen" id="screen-historial">
+            <!-- PANEL DE FILTROS -->
+            <div class="content-panel no-print">
+                <div class="panel-title" style="margin-bottom: 1rem; font-size:1rem;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                    Filtros de Búsqueda
+                </div>
+                <div class="filters-grid">
+                    <div class="form-group">
+                        <label for="searchGeneral">Buscar texto</label>
+                        <input type="text" id="searchGeneral" class="form-control" placeholder="Placa, conductor, destino, motivo o pasajero..." oninput="filterData()">
+                    </div>
+                    <div class="form-group">
+                        <label for="filterFechaInicio">Desde</label>
+                        <input type="date" id="filterFechaInicio" class="form-control" onchange="filterData()">
+                    </div>
+                    <div class="form-group">
+                        <label for="filterFechaFin">Hasta</label>
+                        <input type="date" id="filterFechaFin" class="form-control" onchange="filterData()">
+                    </div>
+                    <div class="form-group" style="justify-content: flex-end;">
+                        <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="resetFilters()">
+                            Restablecer
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABLA GENERAL -->
+            <div class="content-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Historial Completo de Viajes
+                    </div>
+                    <button class="btn btn-secondary no-print" onclick="exportToPDF()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Exportar Reporte PDF
+                    </button>
+                </div>
+
+                <div class="table-responsive" id="pdfReportContainer">
+                    <!-- Título que solo se visualizará en el PDF exportado -->
+                    <div style="display: none;" class="only-print">
+                        <h2 style="color:#1e40af; margin-bottom: 5px;">Bitácora Histórica de Movilización</h2>
+                        <p style="color:#64748b; font-size: 0.85rem; margin-bottom: 20px;">Reporte generado el <span id="pdfGenerationDate"></span></p>
+                    </div>
+
+                    <table id="mainHistorialTable">
+                        <thead>
+                            <tr>
+                                <th>Vehículo</th>
+                                <th>Conductor</th>
+                                <th>Destino</th>
+                                <th>Motivo</th>
+                                <th>Pasajeros</th>
+                                <th>Salida</th>
+                                <th>Km Salida</th>
+                                <th>Llegada</th>
+                                <th>Km Llegada</th>
+                                <th>Recorrido</th>
+                                <th>Estado</th>
+                                <th class="no-print">Editar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBodyHistorial">
+                            <!-- Datos generados por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ==========================================================================
+           PANTALLA 3: GESTIÓN DE DATOS (CONFIGURACIÓN)
+           ========================================================================== -->
+        <div class="app-screen" id="screen-gestion">
+            <div class="list-card-grid">
+                
+                <!-- GESTIÓN DE VEHÍCULOS -->
+                <div class="list-card">
+                    <div class="list-card-header">
+                        <span>Vehículos Nuevos</span>
+                    </div>
+                    <form id="formAddVehiculo" style="margin-bottom: 1.25rem;" onsubmit="event.preventDefault(); addVehiculo();">
+                        <div class="form-group" style="margin-bottom: 0.75rem;">
+                            <label for="gPlaca">Placa (Ej: AAA-000)</label>
+                            <input type="text" id="gPlaca" class="form-control" placeholder="" required style="text-transform: uppercase;">
+                        </div>
+                        <div class="form-grid-2" style="margin-bottom: 0.75rem;">
+                            <div class="form-group">
+                                <label for="gMarca">Marca</label>
+                                <input type="text" id="gMarca" class="form-control" placeholder="" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="gModelo">Modelo</label>
+                                <input type="text" id="gModelo" class="form-control" placeholder="" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                            Agregar Vehículo
+                        </button>
+                    </form>
+
+                    <div class="data-list-scroller" id="scrollerVehicles">
+                        <!-- Generado por JS -->
+                    </div>
+                </div>
+
+                <!-- CONDUCTOR FIJO -->
+                <div class="list-card">
+                    <div class="list-card-header">
+                        <span>Conductor Asignado Fijo</span>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label>Nombre del Conductor Permanente</label>
+                        <input type="text" class="form-control" value="Luis Yupanqui " readonly>
+                        <p style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 0.5rem;">
+                            * El conductor está preestablecido como permanente para agilizar los registros de salida en este sistema.
+                        </p>
+                    </div>
+                    <div style="background-color: #eff6ff; padding: 1rem; border-radius: 0.5rem; border: 1px dashed var(--color-secondary);">
+                        <span style="font-size:0.85rem; font-weight:600; color:var(--color-primary); display:block; margin-bottom:0.25rem;">Regla Operativa Activa:</span>
+                        <p style="font-size:0.8rem; color:var(--color-text-muted);">
+                            Todos los viajes automáticos se generarán con Luis Yupanqui  como operador a cargo de las unidades.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- BASE DE DATOS DE PASAJEROS -->
+                <div class="list-card">
+                    <div class="list-card-header">
+                        <span>Pasajeros Pregrabados</span>
+                    </div>
+                    <form id="formAddPasajero" style="margin-bottom: 1.25rem;" onsubmit="event.preventDefault(); addPasajeroBase();">
+                        <div class="form-group" style="margin-bottom: 0.75rem;">
+                            <label for="gPasajeroName">Nombre Completo</label>
+                            <input type="text" id="gPasajeroName" class="form-control" placeholder="Escribe un nombre de pasajero" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                            Agregar a Base de Datos
+                        </button>
+                    </form>
+
+                    <div class="data-list-scroller" id="scrollerPasajeros">
+                        <!-- Generado por JS -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================================
+       MODAL: REGISTRAR SALIDA
+       ========================================================================== -->
+    <div id="modalSalida" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Registrar Salida de Vehículo</h3>
+                <button class="modal-close" onclick="closeModal('modalSalida')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="formSalida">
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="sVehiculo">Vehículo Asignado</label>
+                            <select id="sVehiculo" class="form-control" required onchange="onVehiculoSelected(this.value)">
+                                <!-- Opciones cargadas por JS -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Conductor Responsable</label>
+                            <input type="text" class="form-control" value="Luis Yupanqui " readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="sDestino">Destino Planificado</label>
+                            <input type="text" id="sDestino" class="form-control" placeholder="Ej: Planta Sur" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sMotivo">Motivo o Misión</label>
+                            <input type="text" id="sMotivo" class="form-control" placeholder="Ej: Entrega urgente" required>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN DE SELECCIÓN DE PASAJEROS INTERACTIVA -->
+                    <div class="form-group">
+                        <span class="passenger-quick-select-label">Seleccionar Pasajeros a Bordo (Toca para marcar)</span>
+                        <div class="passenger-quick-grid" id="sPasajerosSelectionGrid">
+                            <!-- Checkboxes de pasajeros -->
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1.25rem;">
+                        <label for="sKmSalida">Kilometraje de Salida</label>
+                        <input type="number" id="sKmSalida" class="form-control" min="0" required>
+                    </div>
+
+                    <!-- Alerta de Kilometraje -->
+                    <div id="kmAlerta" class="alert-box">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <span id="kmAlertaTexto">Buscando historial...</span>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="sFecha">Fecha de Salida</label>
+                            <input type="date" id="sFecha" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sHora">Hora de Salida</label>
+                            <input type="time" id="sHora" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-secondary" style="width: 100%; margin-top: 0.75rem; margin-bottom: 1rem; justify-content: center;" onclick="setDateTimeNow('sFecha', 'sHora')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Usar fecha y hora actual
+                    </button>
+
+                    <div class="form-group">
+                        <label for="sObs">Observaciones</label>
+                        <textarea id="sObs" class="form-control" rows="2" placeholder="Detalles de salida..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modalSalida')">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveSalida()">Proceder Despacho</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==========================================================================
+       MODAL: REGISTRAR INGRESO (LLEGADA)
+       ========================================================================== -->
+    <div id="modalIngreso" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Registrar Retorno / Ingreso de Unidad</h3>
+                <button class="modal-close" onclick="closeModal('modalIngreso')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="formIngreso">
+                    <input type="hidden" id="iRecordId">
+                    <input type="hidden" id="iKmSalidaReferencia">
+
+                    <p style="margin-bottom:1.25rem; font-size:0.95rem; background:#eff6ff; padding:0.75rem; border-radius:0.5rem; border:1px solid #bfdbfe;">
+                        Vehículo: <strong id="iVehiculoTxt" style="color:var(--color-primary);"></strong> | 
+                        Km Salida: <strong id="iKmSalidaTxt" style="color:var(--color-text-main);"></strong>
+                    </p>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="iKmLlegada">Kilometraje de Llegada</label>
+                            <input type="number" id="iKmLlegada" class="form-control" min="0" required oninput="calcularDiferenciaKm()">
+                        </div>
+                        <div class="form-group">
+                            <label>Distancia Recorrida</label>
+                            <div id="iKmRecorridosDisplay" style="font-weight:700; font-size:1.15rem; padding: 0.65rem 0.85rem; background: var(--color-bg-light); border-radius:0.5rem; text-align:center; color: var(--color-success); border: 1px dashed var(--color-border);">
+                                0 km
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label for="iFecha">Fecha de Entrada</label>
+                            <input type="date" id="iFecha" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="iHora">Hora de Entrada</label>
+                            <input type="time" id="iHora" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-secondary" style="width: 100%; margin-top: 0.75rem; margin-bottom: 1rem; justify-content: center;" onclick="setDateTimeNow('iFecha', 'iHora')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Usar fecha y hora actual
+                    </button>
+
+                    <div class="form-group">
+                        <label for="iObs">Observaciones de Llegada</label>
+                        <textarea id="iObs" class="form-control" rows="2" placeholder="Reporte del estado del vehículo al retornar..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modalIngreso')">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="saveIngreso()">Registrar Ingreso</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: INICIO DE SESIÓN -->
+    <div id="modalLogin" class="modal-overlay">
+        <div class="modal-box" style="max-width: 380px;">
+            <div class="modal-header">
+                <h3>Iniciar Sesión</h3>
+                <button class="modal-close" onclick="closeModal('modalLogin')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--color-text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+                    Inicia sesión para poder corregir datos ya guardados en el historial. Sin sesión, solo puedes consultar la información.
+                </p>
+                <div class="form-group" style="margin-bottom: 0.9rem;">
+                    <label for="loginUsuario">Usuario</label>
+                    <input type="text" id="loginUsuario" class="form-control" placeholder="Usuario" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="loginContrasena">Contraseña</label>
+                    <input type="password" id="loginContrasena" class="form-control" placeholder="Contraseña" onkeydown="if(event.key==='Enter') intentarLogin();">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modalLogin')">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="intentarLogin()">Ingresar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EDITAR REGISTRO DEL HISTORIAL -->
+    <div id="modalEditar" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Editar Registro de Viaje</h3>
+                <button class="modal-close" onclick="closeModal('modalEditar')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="eRecordId">
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="eDestino">Destino</label>
+                        <input type="text" id="eDestino" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="eMotivo">Motivo</label>
+                        <input type="text" id="eMotivo" class="form-control">
+                    </div>
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="eFechaSalida">Fecha de Salida</label>
+                        <input type="date" id="eFechaSalida" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="eHoraSalida">Hora de Salida</label>
+                        <input type="time" id="eHoraSalida" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label for="eKmSalida">Kilometraje de Salida</label>
+                    <input type="number" id="eKmSalida" class="form-control">
+                </div>
+
+                <hr style="border: none; border-top: 1px solid var(--color-border); margin-bottom: 1.25rem;">
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label for="eFechaIngreso">Fecha de Ingreso</label>
+                        <input type="date" id="eFechaIngreso" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="eHoraIngreso">Hora de Ingreso</label>
+                        <input type="time" id="eHoraIngreso" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label for="eKmLlegada">Kilometraje de Llegada</label>
+                    <input type="number" id="eKmLlegada" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="eObsSalida">Observaciones de Salida</label>
+                    <textarea id="eObsSalida" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="form-group" style="margin-top: 0.9rem;">
+                    <label for="eObsIngreso">Observaciones de Llegada</label>
+                    <textarea id="eObsIngreso" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modalEditar')">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarEdicionRegistro()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- CONTENEDOR DE TOASTS -->
+    <div class="toast-container" id="toastContainer"></div>
+
+
+    <!-- ==========================================================================
+       LÓGICA JAVASCRIPT DETALLADA Y COMENTADA
+       ========================================================================== -->
+    <script>
+        /* =======================================================
+          CONEXIÓN GOOGLE APPS SCRIPT
+          Pega el enlace web de tu Web App de Google Apps Script aquí.
+        */
+        const API_URL = "AQUI_VA_MI_LINK";
+
+
+        // =======================================================
+        // ESTADO GLOBAL DEL SISTEMA
+        // =======================================================
+        let appState = {
+            vehicles: [],
+            records: [],
+            passengers: [] // Listado maestro de pasajeros seleccionables
+        };
+
+
+        // Datos Iniciales por defecto
+        const initialVehicles = [
+            { id: "v_eaa_120", placa: "EAA-120", marca: "Toyota", modelo: "Hilux" }
+        ];
+
+        const initialPassengers = [
+            "Luis Ortega", 
+            "Sonia Vega", 
+            "Andrés Marín", 
+            "Diego Salas", 
+            "Karla Peña"
+        ];
+
+        const initialRecords = [
+            {
+                id: "rec_demo_1",
+                vehiculoId: "v_eaa_120",
+                vehiculoPlaca: "EAA-120",
+                conductor: "Luis Yupanqui ",
+                destino: "Mina de Oro Central",
+                motivo: "Traslado de ingenieros de campo",
+                pasajeros: ["Luis Ortega", "Sonia Vega", "Andrés Marín", "Diego Salas", "Karla Peña"],
+                fechaSalida: "2026-07-01",
+                horaSalida: "07:30",
+                kmSalida: 12500,
+                fechaIngreso: "2026-07-01",
+                horaIngreso: "14:15",
+                kmLlegada: 12680,
+                kmRecorridos: 180,
+                estado: "Disponible", // Se representará como 'Finalizado' en las vistas
+                obsSalida: "Tanque lleno.",
+                obsIngreso: "Retorno sin problemas."
+            },
+            {
+                id: "rec_demo_2",
+                vehiculoId: "v_eaa_120",
+                vehiculoPlaca: "EAA-120",
+                conductor: "Luis Yupanqui ",
+                destino: "Planta Industrial Sur",
+                motivo: "Distribución de repuestos",
+                pasajeros: ["Luis Ortega", "Diego Salas"],
+                fechaSalida: "2026-07-02",
+                horaSalida: "09:00",
+                kmSalida: 12680,
+                fechaIngreso: "",
+                horaIngreso: "",
+                kmLlegada: "",
+                kmRecorridos: "",
+                estado: "En ruta",
+                obsSalida: "Control de presión de llantas.",
+                obsIngreso: ""
+            }
+        ];
+
+
+        // =======================================================
+        // EVENTO DE INICIO
+        // =======================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeStorage();
+            verifyAPIConnection();
+            renderAllData();
+            actualizarUISesion();
+        });
+
+        // =======================================================
+        // SISTEMA DE ACCESO (Usuario/Contraseña para editar historial)
+        // Cambia estas credenciales por las que prefieras usar.
+        // La sesión se guarda en este navegador (localStorage) y
+        // aplica también al Control de Personal si abres ambos
+        // archivos desde el mismo sitio/dominio.
+        // =======================================================
+        const CREDENCIALES_ACCESO = {
+            usuario: "admin",
+            contrasena: "admin123"
+        };
+
+        function haySesionActiva() {
+            return localStorage.getItem('sesion_control_activa') === 'true';
+        }
+
+        function actualizarUISesion() {
+            const dot = document.getElementById('sesionDot');
+            const text = document.getElementById('sesionText');
+            const btn = document.getElementById('btnSesionAccion');
+            if (!dot || !text || !btn) return;
+
+            if (haySesionActiva()) {
+                dot.classList.add('connected');
+                text.textContent = 'Modo Edición Activo';
+                btn.textContent = 'Cerrar sesión';
+                btn.onclick = cerrarSesion;
+            } else {
+                dot.classList.remove('connected');
+                text.textContent = 'Solo Lectura';
+                btn.textContent = 'Iniciar sesión';
+                btn.onclick = abrirModalLogin;
+            }
+
+            document.querySelectorAll('.btn-editar-registro').forEach(b => {
+                b.style.display = haySesionActiva() ? 'inline-flex' : 'none';
+            });
+        }
+
+        function abrirModalLogin() {
+            document.getElementById('loginUsuario').value = '';
+            document.getElementById('loginContrasena').value = '';
+            openModal('modalLogin');
+        }
+
+        function intentarLogin() {
+            const u = document.getElementById('loginUsuario').value.trim();
+            const p = document.getElementById('loginContrasena').value;
+
+            if (u === CREDENCIALES_ACCESO.usuario && p === CREDENCIALES_ACCESO.contrasena) {
+                localStorage.setItem('sesion_control_activa', 'true');
+                closeModal('modalLogin');
+                actualizarUISesion();
+                showToast("Sesión iniciada", "Ahora puedes editar los registros del historial.", "success");
+            } else {
+                showToast("Acceso Denegado", "Usuario o contraseña incorrectos.", "danger");
+            }
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem('sesion_control_activa');
+            actualizarUISesion();
+            showToast("Sesión cerrada", "Ahora estás en modo solo lectura.", "warning");
+        }
+
+
+
+        // Carga y almacenamiento local
+        function initializeStorage() {
+            const storedVehicles = localStorage.getItem('fleet_v2_vehicles');
+            const storedRecords = localStorage.getItem('fleet_v2_records');
+            const storedPassengers = localStorage.getItem('fleet_v2_passengers');
+
+            if (storedVehicles) {
+                appState.vehicles = JSON.parse(storedVehicles);
+            } else {
+                appState.vehicles = initialVehicles;
+                saveToLocalStorage('vehicles');
+            }
+
+            if (storedRecords) {
+                appState.records = JSON.parse(storedRecords);
+            } else {
+                appState.records = initialRecords;
+                saveToLocalStorage('records');
+            }
+
+            if (storedPassengers) {
+                appState.passengers = JSON.parse(storedPassengers);
+            } else {
+                appState.passengers = initialPassengers;
+                saveToLocalStorage('passengers');
+            }
+        }
+
+        function saveToLocalStorage(key) {
+            if (key === 'vehicles' || !key) {
+                localStorage.setItem('fleet_v2_vehicles', JSON.stringify(appState.vehicles));
+            }
+            if (key === 'records' || !key) {
+                localStorage.setItem('fleet_v2_records', JSON.stringify(appState.records));
+            }
+            if (key === 'passengers' || !key) {
+                localStorage.setItem('fleet_v2_passengers', JSON.stringify(appState.passengers));
+            }
+        }
+
+
+        // =======================================================
+        // INTEGRACIÓN CON GOOGLE SHEETS (FETCH)
+        // =======================================================
+        function verifyAPIConnection() {
+            const badge = document.getElementById('syncStatusBadge');
+            const dot = document.getElementById('syncStatusDot');
+            const text = document.getElementById('syncStatusText');
+
+            if (API_URL && API_URL !== "AQUI_VA_MI_LINK") {
+                dot.classList.add('connected');
+                text.textContent = "Sheets Sincronizado";
+                badge.setAttribute('title', 'La aplicación está conectada con Google Apps Script.');
+                fetchFromCloud();
+            } else {
+                dot.classList.remove('connected');
+                text.textContent = "Modo Local (Sin Nube)";
+                badge.setAttribute('title', 'Los datos se guardan de forma local en el navegador.');
+            }
+        }
+
+        async function fetchFromCloud() {
+            if (!API_URL || API_URL === "AQUI_VA_MI_LINK") return;
+            try {
+                const response = await fetch(`${API_URL}?action=getData`);
+                if (!response.ok) throw new Error("Error en servidor");
+                const res = await response.json();
+                if (res.status === "success") {
+                    appState.vehicles = res.vehicles || appState.vehicles;
+                    appState.records = res.records || appState.records;
+                    appState.passengers = res.passengers || appState.passengers;
+                    
+                    saveToLocalStorage();
+                    renderAllData();
+                    showToast("Sincronizado", "Los datos se han descargado desde Google Sheets.", "success");
+                }
+            } catch (error) {
+                console.error("Error al obtener de Sheets:", error);
+                showToast("Error de Conexión", "No se pudieron traer datos remotos. Usando local.", "danger");
+            }
+        }
+
+        async function sendToCloud(actionType, payloadData) {
+            if (!API_URL || API_URL === "AQUI_VA_MI_LINK") return;
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: actionType, data: payloadData })
+                });
+                showToast("Nube Sincronizada", "Los datos fueron guardados exitosamente.", "success");
+            } catch (error) {
+                console.error("Error al subir a Sheets:", error);
+                showToast("Sincronización Fallida", "Guardado de forma local (Nube desconectada).", "warning");
+            }
+        }
+
+
+        // =======================================================
+        // CONTROL DE PESTAÑAS (PANTALLAS) - CORRECCIÓN DE SCROLL
+        // =======================================================
+        function switchTab(tabId) {
+            // Ocultar todas las pantallas
+            document.querySelectorAll('.app-screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            // Remover estado activo de botones
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Activar pantalla y botón seleccionados
+            document.getElementById(`screen-${tabId}`).classList.add('active');
+            document.getElementById(`tab-btn-${tabId}`).classList.add('active');
+
+            // Desplazar la ventana general de vuelta al tope
+            window.scrollTo(0, 0);
+
+            // Desplazar contenedores de tablas y scrollers internos al tope si existiese scroll
+            document.querySelectorAll('.table-responsive, .data-list-scroller').forEach(el => {
+                el.scrollTop = 0;
+                el.scrollLeft = 0;
+            });
+
+            // Actualizar vistas si es necesario
+            if (tabId === 'operaciones' || tabId === 'historial') {
+                renderAllData();
+            }
+        }
+
+
+        // =======================================================
+        // RENDERIZADO GLOBAL DE COMPONENTES
+        // =======================================================
+        function renderAllData() {
+            // Calcular estadísticas
+            const totalViajes = appState.records.length;
+            const enRuta = appState.records.filter(r => r.estado === 'En ruta').length;
+            let totalKm = 0;
+            appState.records.forEach(r => {
+                if (r.kmRecorridos) totalKm += parseFloat(r.kmRecorridos);
+            });
+
+            document.getElementById('statTotalViajes').textContent = totalViajes;
+            document.getElementById('statEnRuta').textContent = enRuta;
+            document.getElementById('statKmRecorridos').textContent = formatNumber(totalKm) + ' km';
+
+            // Renders específicos
+            renderTableOperaciones();
+            renderTableHistorial();
+            renderScrollerVehicles();
+            renderScrollerPasajeros();
+        }
+
+        // Render de Pantalla 1: Operaciones (Ajustado para mostrar Motivo)
+        function renderTableOperaciones() {
+            const tbody = document.getElementById('tableBodyRutasActivas');
+            tbody.innerHTML = '';
+
+            // Solo mostramos aquellos en ruta
+            const activeJourneys = appState.records.filter(r => r.estado === 'En ruta');
+
+            if (activeJourneys.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" style="text-align: center; color: var(--color-text-muted); padding: 3rem 1.5rem;">
+                            <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem;">No hay vehículos activos en ruta</div>
+                            <p style="font-size:0.85rem;">Todos los autos se encuentran actualmente en base o disponibles.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            activeJourneys.forEach(record => {
+                const tr = document.createElement('tr');
+                let pasajerosHTML = '<span style="color:var(--color-text-muted); font-size:0.8rem;">Sin pasajeros</span>';
+                if (record.pasajeros && record.pasajeros.length > 0) {
+                    pasajerosHTML = '<div class="pasajeros-container">';
+                    record.pasajeros.forEach(p => {
+                        pasajerosHTML += `<span class="pasajero-chip">${p}</span>`;
+                    });
+                    pasajerosHTML += '</div>';
+                }
+
+                tr.innerHTML = `
+                    <td style="font-weight:700; color:var(--color-primary);">${record.vehiculoPlaca}</td>
+                    <td style="font-weight:500;">${record.conductor}</td>
+                    <td>${record.destino}</td>
+                    <td>${record.motivo || '-'}</td>
+                    <td>${pasajerosHTML}</td>
+                    <td>${formatDate(record.fechaSalida)} ${record.horaSalida}</td>
+                    <td>${formatNumber(record.kmSalida)} km</td>
+                    <td>
+                        <span class="badge badge-ruta">
+                            <span class="status-dot" style="background-color: var(--color-warning); width:6px; height:6px;"></span>
+                            En ruta
+                        </span>
+                    </td>
+                    <td style="text-align: right;">
+                        <button class="btn btn-success" style="padding: 0.45rem 0.85rem; font-size: 0.8rem;" onclick="openModalIngreso('${record.id}')">
+                            Registrar Ingreso
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Render de Pantalla 2: Historial (Ajustado para cambiar "Disponible" por "Finalizado")
+        function renderTableHistorial(recordsToDisplay = appState.records) {
+            const tbody = document.getElementById('tableBodyHistorial');
+            tbody.innerHTML = '';
+
+            if (recordsToDisplay.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="12" style="text-align: center; color: var(--color-text-muted); padding: 2rem;">
+                            No se encontraron viajes con los filtros seleccionados.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            // Orden descendente (más recientes arriba)
+            const sorted = [...recordsToDisplay].sort((a, b) => {
+                const dateA = new Date(`${a.fechaSalida}T${a.horaSalida}`);
+                const dateB = new Date(`${b.fechaSalida}T${b.horaSalida}`);
+                return dateB - dateA;
+            });
+
+            sorted.forEach(record => {
+                const tr = document.createElement('tr');
+                
+                // Si el viaje ya concluyó (estado 'Disponible'), se muestra visualmente como 'Finalizado'
+                const esDisponible = (record.estado === 'Disponible');
+                let statusClass = esDisponible ? 'badge-disponible' : 'badge-ruta';
+                let statusText = esDisponible ? 'Finalizado' : 'En ruta';
+
+                let pasajerosHTML = '';
+                if (record.pasajeros && record.pasajeros.length > 0) {
+                    pasajerosHTML = '<div class="pasajeros-container">';
+                    record.pasajeros.forEach(p => {
+                        pasajerosHTML += `<span class="pasajero-chip">${p}</span>`;
+                    });
+                    pasajerosHTML += '</div>';
+                } else {
+                    pasajerosHTML = '<span style="color:var(--color-text-muted); font-size:0.75rem;">Sin pasajeros</span>';
+                }
+
+                tr.innerHTML = `
+                    <td style="font-weight:700; color:var(--color-primary);">${record.vehiculoPlaca}</td>
+                    <td style="font-weight:500;">${record.conductor}</td>
+                    <td>${record.destino}</td>
+                    <td>${record.motivo || '-'}</td>
+                    <td>${pasajerosHTML}</td>
+                    <td>
+                        <span style="font-size:0.75rem; color:var(--color-text-muted); display:block;">${formatDate(record.fechaSalida)}</span>
+                        <span>${record.horaSalida}</span>
+                    </td>
+                    <td>${formatNumber(record.kmSalida)}</td>
+                    <td>
+                        <span style="font-size:0.75rem; color:var(--color-text-muted); display:block;">${record.fechaIngreso ? formatDate(record.fechaIngreso) : ''}</span>
+                        <span>${record.horaIngreso || '-'}</span>
+                    </td>
+                    <td>${record.kmLlegada ? formatNumber(record.kmLlegada) : '-'}</td>
+                    <td style="font-weight:600; color:var(--color-success);">${record.kmRecorridos ? formatNumber(record.kmRecorridos) + ' km' : '-'}</td>
+                    <td>
+                        <span class="badge ${statusClass}">
+                            <span class="status-dot ${esDisponible ? 'connected' : ''}" style="width:6px; height:6px;"></span>
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td class="no-print">
+                        <button class="btn-icon-del btn-editar-registro" style="color: var(--color-secondary); display: none;" title="Editar registro" onclick="abrirEdicionRegistro('${record.id}')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            actualizarUISesion();
+        }
+
+        // Render de Pantalla 3: Gestión (Listas maestras)
+        function renderScrollerVehicles() {
+            const container = document.getElementById('scrollerVehicles');
+            container.innerHTML = '';
+
+            if (appState.vehicles.length === 0) {
+                container.innerHTML = `<p style="font-size:0.85rem; color:var(--color-text-muted);">No hay vehículos en flota.</p>`;
+                return;
+            }
+
+            appState.vehicles.forEach(v => {
+                const row = document.createElement('div');
+                row.className = 'data-row-item';
+                row.innerHTML = `
+                    <div class="data-row-info">
+                        <span class="data-row-title">${v.placa}</span>
+                        <span class="data-row-subtitle">${v.marca} ${v.modelo}</span>
+                    </div>
+                    <button class="btn-icon-del" title="Eliminar vehículo" onclick="deleteVehiculo('${v.id}')">
+                        &times;
+                    </button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // Render de listado maestro de pasajeros
+        function renderScrollerPasajeros() {
+            const container = document.getElementById('scrollerPasajeros');
+            container.innerHTML = '';
+
+            if (appState.passengers.length === 0) {
+                container.innerHTML = `<p style="font-size:0.85rem; color:var(--color-text-muted);">No hay pasajeros registrados.</p>`;
+                return;
+            }
+
+            appState.passengers.forEach((p, idx) => {
+                const row = document.createElement('div');
+                row.className = 'data-row-item';
+                row.innerHTML = `
+                    <div class="data-row-info">
+                        <span class="data-row-title">${p}</span>
+                    </div>
+                    <button class="btn-icon-del" title="Eliminar pasajero" onclick="deletePasajeroBase(${idx})">
+                        &times;
+                    </button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+
+        // =======================================================
+        // GESTIÓN DE PASAJEROS DINÁMICOS EN EL MODAL DE SALIDA
+        // =======================================================
+        function buildPassengerSelectionGrid() {
+            const grid = document.getElementById('sPasajerosSelectionGrid');
+            grid.innerHTML = '';
+
+            if (appState.passengers.length === 0) {
+                grid.innerHTML = `<span style="font-size:0.8rem; color:var(--color-text-muted);">Registra pasajeros en el menú "Gestión de Datos".</span>`;
+                return;
+            }
+
+            appState.passengers.forEach((p, idx) => {
+                const div = document.createElement('div');
+                div.className = 'passenger-item';
+                div.setAttribute('data-name', p);
+                div.innerHTML = `
+                    <input type="checkbox" id="chk_pas_${idx}" value="${p}" onchange="togglePassengerVisual(this)">
+                    <span class="passenger-item-name">${p}</span>
+                `;
+                // Permitir click en toda la cajita
+                div.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'INPUT') {
+                        const checkbox = div.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                        togglePassengerVisual(checkbox);
+                    }
+                });
+                grid.appendChild(div);
+            });
+        }
+
+        function togglePassengerVisual(checkbox) {
+            const container = checkbox.closest('.passenger-item');
+            if (checkbox.checked) {
+                container.classList.add('selected');
+            } else {
+                container.classList.remove('selected');
+            }
+        }
+
+        function getSelectedPassengers() {
+            const selected = [];
+            const checkboxes = document.querySelectorAll('#sPasajerosSelectionGrid input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                if (cb.checked) selected.push(cb.value);
+            });
+            return selected;
+        }
+
+
+        // =======================================================
+        // PROCESAMIENTO DE SALIDAS (AUTO-SELECCIÓN DE CARRO)
+        // =======================================================
+        function openModalSalida() {
+            const selectVehiculo = document.getElementById('sVehiculo');
+            
+            // Re-poblar selector de autos
+            selectVehiculo.innerHTML = '';
+
+            if (appState.vehicles.length === 0) {
+                showToast("Sin Vehículos", "Por favor, agrega al menos un vehículo en la pestaña de Gestión de Datos.", "danger");
+                return;
+            }
+
+            // Construir opciones
+            if (appState.vehicles.length > 1) {
+                selectVehiculo.innerHTML = '<option value="">-- Elige un Vehículo --</option>';
+            }
+
+            appState.vehicles.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.id;
+                opt.textContent = `${v.placa} (${v.marca} ${v.modelo})`;
+                selectVehiculo.appendChild(opt);
+            });
+
+            // Si hay un solo vehículo, auto-seleccionarlo y deshabilitar si es necesario
+            if (appState.vehicles.length === 1) {
+                selectVehiculo.value = appState.vehicles[0].id;
+                onVehiculoSelected(appState.vehicles[0].id);
+            } else {
+                document.getElementById('kmAlerta').style.display = 'none';
+                document.getElementById('sKmSalida').value = '';
+            }
+
+            // Construir grilla de pasajeros
+            buildPassengerSelectionGrid();
+
+            setDateTimeNow('sFecha', 'sHora');
+            openModal('modalSalida');
+        }
+
+        function onVehiculoSelected(vehId) {
+            const alertBox = document.getElementById('kmAlerta');
+            const alertText = document.getElementById('kmAlertaTexto');
+            const kmInput = document.getElementById('sKmSalida');
+
+            if (!vehId) {
+                alertBox.style.display = 'none';
+                kmInput.value = '';
+                return;
+            }
+
+            // Validación: Verificar que el vehículo seleccionado no se encuentre ya en tránsito
+            const estaEnRuta = appState.records.some(r => r.vehiculoId === vehId && r.estado === 'En ruta');
+            if (estaEnRuta) {
+                showToast("Vehículo Ocupado", "Este vehículo está operando actualmente en ruta. Debe retornar primero.", "danger");
+                document.getElementById('sVehiculo').value = '';
+                alertBox.style.display = 'none';
+                kmInput.value = '';
+                return;
+            }
+
+            // Obtener último km
+            const lastArrivalKm = getLastArrivalKm(vehId);
+
+            if (lastArrivalKm !== null) {
+                kmInput.value = lastArrivalKm;
+                alertBox.className = "alert-box alert-success";
+                alertText.innerHTML = `Kilometraje inicial completado automáticamente: <strong>${formatNumber(lastArrivalKm)} km</strong> (Basado en historial anterior).`;
+                alertBox.style.display = 'flex';
+            } else {
+                kmInput.value = '';
+                alertBox.className = "alert-box alert-warning";
+                alertText.innerHTML = "No se localizó un kilometraje anterior de llegada. Escríbelo manualmente.";
+                alertBox.style.display = 'flex';
+            }
+        }
+
+        function getLastArrivalKm(vehId) {
+            // Filtrar viajes completados de esta unidad
+            const completed = appState.records.filter(r => r.vehiculoId === vehId && r.estado === 'Disponible' && r.kmLlegada);
+            if (completed.length === 0) return null;
+
+            // Ordenar por tiempo
+            completed.sort((a, b) => {
+                const dA = new Date(`${a.fechaIngreso}T${a.horaIngreso}`);
+                const dB = new Date(`${b.fechaIngreso}T${b.horaIngreso}`);
+                return dB - dA;
+            });
+
+            return completed[0].kmLlegada;
+        }
+
+        function saveSalida() {
+            const vehId = document.getElementById('sVehiculo').value;
+            const destino = document.getElementById('sDestino').value.trim();
+            const motivo = document.getElementById('sMotivo').value.trim();
+            const kmSalida = parseFloat(document.getElementById('sKmSalida').value);
+            const fechaSalida = document.getElementById('sFecha').value;
+            const horaSalida = document.getElementById('sHora').value;
+            const obsSalida = document.getElementById('sObs').value.trim();
+
+            if (!vehId || !destino || !motivo || isNaN(kmSalida) || !fechaSalida || !horaSalida) {
+                showToast("Formulario incompleto", "Completa todos los datos requeridos.", "warning");
+                return;
+            }
+
+            const veh = appState.vehicles.find(v => v.id === vehId);
+            const pasajeros = getSelectedPassengers();
+
+            const newRecord = {
+                id: 'rec_' + Date.now(),
+                vehiculoId: vehId,
+                vehiculoPlaca: veh.placa,
+                conductor: "Luis Yupanqui ", // Fijo
+                destino,
+                motivo,
+                pasajeros,
+                fechaSalida,
+                horaSalida,
+                kmSalida,
+                fechaIngreso: "",
+                horaIngreso: "",
+                kmLlegada: "",
+                kmRecorridos: "",
+                estado: "En ruta",
+                obsSalida,
+                obsIngreso: ""
+            };
+
+            appState.records.push(newRecord);
+            saveToLocalStorage('records');
+            renderAllData();
+            closeModal('modalSalida');
+            showToast("Salida Procesada", `Unidad ${veh.placa} despachada hacia ${destino}.`, "success");
+
+            // Enviar a la nube
+            sendToCloud("addDeparture", newRecord);
+        }
+
+
+        // =======================================================
+        // PROCESAMIENTO DE RETORNOS / INGRESOS
+        // =======================================================
+        function openModalIngreso(recordId) {
+            const rec = appState.records.find(r => r.id === recordId);
+            if (!rec) return;
+
+            document.getElementById('iRecordId').value = recordId;
+            document.getElementById('iKmSalidaReferencia').value = rec.kmSalida;
+            document.getElementById('iVehiculoTxt').textContent = rec.vehiculoPlaca;
+            document.getElementById('iKmSalidaTxt').textContent = `${formatNumber(rec.kmSalida)} km`;
+
+            document.getElementById('iKmLlegada').value = '';
+            document.getElementById('iKmRecorridosDisplay').textContent = '0 km';
+            document.getElementById('iKmRecorridosDisplay').style.color = 'var(--color-text-muted)';
+
+            setDateTimeNow('iFecha', 'iHora');
+            openModal('modalIngreso');
+        }
+
+        function calcularDiferenciaKm() {
+            const sKm = parseFloat(document.getElementById('iKmSalidaReferencia').value);
+            const lKm = parseFloat(document.getElementById('iKmLlegada').value);
+            const disp = document.getElementById('iKmRecorridosDisplay');
+
+            if (isNaN(lKm)) {
+                disp.textContent = '0 km';
+                disp.style.color = 'var(--color-text-muted)';
+                return;
+            }
+
+            const diff = lKm - sKm;
+            if (diff < 0) {
+                disp.textContent = "¡Menor a Salida!";
+                disp.style.color = "var(--color-danger)";
+            } else {
+                disp.textContent = `${formatNumber(diff)} km`;
+                disp.style.color = "var(--color-success)";
+            }
+        }
+
+        function saveIngreso() {
+            const id = document.getElementById('iRecordId').value;
+            const sKm = parseFloat(document.getElementById('iKmSalidaReferencia').value);
+            const lKm = parseFloat(document.getElementById('iKmLlegada').value);
+            const fechaIngreso = document.getElementById('iFecha').value;
+            const horaIngreso = document.getElementById('iHora').value;
+            const obsIngreso = document.getElementById('iObs').value.trim();
+
+            if (isNaN(lKm) || !fechaIngreso || !horaIngreso) {
+                showToast("Incompleto", "Ingresa kilometraje, fecha y hora de llegada.", "warning");
+                return;
+            }
+
+            if (lKm < sKm) {
+                showToast("Fallo en Kilometraje", "El kilometraje de entrada no puede ser inferior al registrado en la salida.", "danger");
+                return;
+            }
+
+            const idx = appState.records.findIndex(r => r.id === id);
+            if (idx === -1) return;
+
+            const updated = {
+                ...appState.records[idx],
+                fechaIngreso,
+                horaIngreso,
+                kmLlegada: lKm,
+                kmRecorridos: lKm - sKm,
+                estado: "Disponible", // Se mapea como 'Finalizado' en las vistas
+                obsIngreso
+            };
+
+            appState.records[idx] = updated;
+            saveToLocalStorage('records');
+            renderAllData();
+            closeModal('modalIngreso');
+            showToast("Vehículo en Base", `Se completó la recepción de la unidad.`, "success");
+
+            sendToCloud("addArrival", updated);
+        }
+
+        // =======================================================
+        // EDICIÓN DE REGISTROS YA GUARDADOS (Corrección de errores)
+        // =======================================================
+        function abrirEdicionRegistro(recordId) {
+            if (!haySesionActiva()) {
+                showToast("Acceso Restringido", "Inicia sesión para poder editar registros del historial.", "warning");
+                return;
+            }
+
+            const rec = appState.records.find(r => r.id === recordId);
+            if (!rec) return;
+
+            document.getElementById('eRecordId').value = rec.id;
+            document.getElementById('eDestino').value = rec.destino || '';
+            document.getElementById('eMotivo').value = rec.motivo || '';
+            document.getElementById('eFechaSalida').value = rec.fechaSalida || '';
+            document.getElementById('eHoraSalida').value = rec.horaSalida || '';
+            document.getElementById('eKmSalida').value = rec.kmSalida || '';
+            document.getElementById('eFechaIngreso').value = rec.fechaIngreso || '';
+            document.getElementById('eHoraIngreso').value = rec.horaIngreso || '';
+            document.getElementById('eKmLlegada').value = rec.kmLlegada || '';
+            document.getElementById('eObsSalida').value = rec.obsSalida || '';
+            document.getElementById('eObsIngreso').value = rec.obsIngreso || '';
+
+            openModal('modalEditar');
+        }
+
+        function guardarEdicionRegistro() {
+            const id = document.getElementById('eRecordId').value;
+            const idx = appState.records.findIndex(r => r.id === id);
+            if (idx === -1) return;
+
+            const kmSalida = parseFloat(document.getElementById('eKmSalida').value);
+            const kmLlegadaRaw = document.getElementById('eKmLlegada').value;
+            const kmLlegada = kmLlegadaRaw === '' ? '' : parseFloat(kmLlegadaRaw);
+
+            if (isNaN(kmSalida)) {
+                showToast("Dato inválido", "El kilometraje de salida debe ser un número.", "warning");
+                return;
+            }
+            if (kmLlegada !== '' && kmLlegada < kmSalida) {
+                showToast("Kilometraje inconsistente", "El km de llegada no puede ser menor al de salida.", "danger");
+                return;
+            }
+
+            const original = appState.records[idx];
+            const updated = {
+                ...original,
+                destino: document.getElementById('eDestino').value.trim(),
+                motivo: document.getElementById('eMotivo').value.trim(),
+                fechaSalida: document.getElementById('eFechaSalida').value,
+                horaSalida: document.getElementById('eHoraSalida').value,
+                kmSalida: kmSalida,
+                fechaIngreso: document.getElementById('eFechaIngreso').value,
+                horaIngreso: document.getElementById('eHoraIngreso').value,
+                kmLlegada: kmLlegada,
+                kmRecorridos: kmLlegada !== '' ? (kmLlegada - kmSalida) : '',
+                estado: kmLlegada !== '' ? 'Disponible' : 'En ruta',
+                obsSalida: document.getElementById('eObsSalida').value.trim(),
+                obsIngreso: document.getElementById('eObsIngreso').value.trim()
+            };
+
+            appState.records[idx] = updated;
+            saveToLocalStorage('records');
+            renderAllData();
+            closeModal('modalEditar');
+            showToast("Registro Actualizado", "Los cambios se guardaron correctamente.", "success");
+
+            // Envía la actualización a la nube. Tu Apps Script debe tener
+            // una acción "updateRecord" que busque por "id" y sobrescriba
+            // la fila correspondiente en la hoja de cálculo.
+            sendToCloud("updateRecord", updated);
+        }
+
+
+        // =======================================================
+        // GESTIÓN DE BASES DE DATOS (AÑADIR/ELIMINAR)
+        // =======================================================
+        function addVehiculo() {
+            const placa = document.getElementById('gPlaca').value.trim().toUpperCase();
+            const marca = document.getElementById('gMarca').value.trim();
+            const modelo = document.getElementById('gModelo').value.trim();
+
+            if (!placa || !marca || !modelo) return;
+
+            const duplicate = appState.vehicles.find(v => v.placa === placa);
+            if (duplicate) {
+                showToast("Duplicado", "La placa ya existe en el sistema.", "danger");
+                return;
+            }
+
+            const newVeh = { id: 'veh_' + Date.now(), placa, marca, modelo };
+            appState.vehicles.push(newVeh);
+            saveToLocalStorage('vehicles');
+            renderAllData();
+
+            document.getElementById('formAddVehiculo').reset();
+            showToast("Vehículo Agregado", `Se integró la unidad ${placa} a la flota.`, "success");
+
+            sendToCloud("addVehicle", newVeh);
+        }
+
+        function deleteVehiculo(id) {
+            const v = appState.vehicles.find(x => x.id === id);
+            if (!v) return;
+
+            if (confirm(`¿Estás seguro de remover el vehículo ${v.placa} de la flota?`)) {
+                appState.vehicles = appState.vehicles.filter(x => x.id !== id);
+                saveToLocalStorage('vehicles');
+                renderAllData();
+                showToast("Eliminado", "Vehículo retirado.", "warning");
+
+                sendToCloud("deleteVehicle", { id });
+            }
+        }
+
+        function addPasajeroBase() {
+            const name = document.getElementById('gPasajeroName').value.trim();
+            if (!name) return;
+
+            const duplicate = appState.passengers.includes(name);
+            if (duplicate) {
+                showToast("Pasajero ya registrado", "Ese nombre ya se encuentra en la base.", "warning");
+                return;
+            }
+
+            appState.passengers.push(name);
+            saveToLocalStorage('passengers');
+            renderAllData();
+
+            document.getElementById('formAddPasajero').reset();
+            showToast("Pasajero Guardado", "Añadido exitosamente a la base maestra.", "success");
+
+            sendToCloud("addPassenger", { name });
+        }
+
+        function deletePasajeroBase(index) {
+            const p = appState.passengers[index];
+            if (confirm(`¿Estás seguro de remover a ${p} de la lista de pasajeros?`)) {
+                appState.passengers.splice(index, 1);
+                saveToLocalStorage('passengers');
+                renderAllData();
+                showToast("Removido", "Pasajero eliminado de la base.", "warning");
+
+                sendToCloud("deletePassenger", { name: p });
+            }
+        }
+
+
+        // =======================================================
+        // BUSCADOR Y FILTROS POR FECHAS (PANTALLA 2)
+        // =======================================================
+        function filterData() {
+            const query = document.getElementById('searchGeneral').value.toLowerCase();
+            const dateStart = document.getElementById('filterFechaInicio').value;
+            const dateEnd = document.getElementById('filterFechaFin').value;
+
+            const filtered = appState.records.filter(record => {
+                // Filtro textual
+                const pasajerosTxt = record.pasajeros ? record.pasajeros.join(', ').toLowerCase() : '';
+                const matchText = 
+                    record.vehiculoPlaca.toLowerCase().includes(query) ||
+                    record.conductor.toLowerCase().includes(query) ||
+                    record.destino.toLowerCase().includes(query) ||
+                    (record.motivo && record.motivo.toLowerCase().includes(query)) ||
+                    pasajerosTxt.includes(query);
+
+                // Filtro fechas
+                let matchDate = true;
+                const dateSalida = record.fechaSalida;
+
+                if (dateStart && dateSalida < dateStart) matchDate = false;
+                if (dateEnd && dateSalida > dateEnd) matchDate = false;
+
+                return matchText && matchDate;
+            });
+
+            renderTableHistorial(filtered);
+        }
+
+        function resetFilters() {
+            document.getElementById('searchGeneral').value = '';
+            document.getElementById('filterFechaInicio').value = '';
+            document.getElementById('filterFechaFin').value = '';
+            renderTableHistorial();
+        }
+
+
+        // =======================================================
+        // EXPORTACIÓN EXCLUSIVA A PDF
+        // =======================================================
+        function exportToPDF() {
+            const element = document.getElementById('pdfReportContainer');
+            
+            // Colocar fecha actual en el título del PDF
+            const now = new Date();
+            document.getElementById('pdfGenerationDate').textContent = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+
+            // Ocultar botones e inputs innecesarios para visualización limpia en PDF
+            document.querySelectorAll('.no-print').forEach(el => el.style.display = 'none');
+            
+            // Mostrar títulos print-only
+            const printOnly = document.querySelector('.only-print');
+            if (printOnly) printOnly.style.display = 'block';
+
+            const opt = {
+                margin:       [0.4, 0.4, 0.4, 0.4],
+                filename:     `Reporte_Movilizacion_Completo.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Re-establecer diseño web original
+                document.querySelectorAll('.no-print').forEach(el => el.style.display = '');
+                if (printOnly) printOnly.style.display = 'none';
+                showToast("PDF Descargado", "Reporte generado correctamente.", "success");
+            }).catch(err => {
+                console.error("Fallo de PDF:", err);
+                document.querySelectorAll('.no-print').forEach(el => el.style.display = '');
+                if (printOnly) printOnly.style.display = 'none';
+                showToast("Fallo de Generación", "No se pudo formatear el PDF.", "danger");
+            });
+        }
+
+
+        // =======================================================
+        // UTILIDADES GENERALES & CONTROLADORES DE MODAL REINICIADOS
+        // =======================================================
+        function formatNumber(num) {
+            return new Intl.NumberFormat('es-MX').format(num);
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const parts = dateString.split('-');
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
+        // CONTROL DE APERTURA: Con reseteo de scroll automático para el modal-body
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+                
+                // Reinicia la posición de scroll del modal-body al tope superior
+                const modalBody = modal.querySelector('.modal-body');
+                if (modalBody) {
+                    modalBody.scrollTop = 0;
+                    modalBody.scrollLeft = 0;
+                }
+            }
+        }
+
+        // CONTROL DE CIERRE: Con reseteo de scroll automático para el modal-body
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+                
+                // Asegura dejar el scroll en 0 al salir para que la próxima apertura sea limpia
+                const modalBody = modal.querySelector('.modal-body');
+                if (modalBody) {
+                    modalBody.scrollTop = 0;
+                    modalBody.scrollLeft = 0;
+                }
+            }
+            if (modalId === 'modalSalida') {
+                document.getElementById('formSalida').reset();
+                document.getElementById('kmAlerta').style.display = 'none';
+            }
+            if (modalId === 'modalIngreso') {
+                document.getElementById('formIngreso').reset();
+            }
+        }
+
+        function setDateTimeNow(dateId, timeId) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+
+            document.getElementById(dateId).value = `${year}-${month}-${day}`;
+            document.getElementById(timeId).value = `${hours}:${minutes}`;
+        }
+
+        function showToast(title, message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let toastClass = 'toast-success';
+            if (type === 'danger') toastClass = 'toast-danger';
+            if (type === 'warning') toastClass = 'toast-warning';
+
+            toast.className = `toast ${toastClass}`;
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-msg">${message}</div>
+                </div>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.add('show'); }, 50);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => { toast.remove(); }, 300);
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
