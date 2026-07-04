@@ -908,7 +908,7 @@
             const dot = document.getElementById('syncStatusDot');
             const text = document.getElementById('syncStatusText');
 
-            if (API_URL && API_URL !== "AQUI_VA_MI_LINK") {
+            if (API_URL && API_URL !== "https://docs.google.com/spreadsheets/d/1uvuXEieqM7E3YGY7i0PhpEmoiKChUZQuDCHl6wilyUE/edit?usp=sharing") {
                 dot.classList.add('connected');
                 text.textContent = "Sheets Sincronizado";
                 badge.setAttribute('title', 'La aplicación está conectada con Google Apps Script.');
@@ -921,7 +921,7 @@
         }
 
         async function fetchFromCloud() {
-            if (!API_URL || API_URL === "AQUI_VA_MI_LINK") return;
+            if (!API_URL || API_URL === "https://docs.google.com/spreadsheets/d/1uvuXEieqM7E3YGY7i0PhpEmoiKChUZQuDCHl6wilyUE/edit?usp=sharing") return;
             try {
                 const response = await fetch(`${API_URL}?action=getData`);
                 if (!response.ok) throw new Error("Error en servidor");
@@ -941,7 +941,7 @@
         }
 
         async function sendToCloud(actionType, payloadData) {
-            if (!API_URL || API_URL === "AQUI_VA_MI_LINK") return;
+            if (!API_URL || API_URL === "https://docs.google.com/spreadsheets/d/1uvuXEieqM7E3YGY7i0PhpEmoiKChUZQuDCHl6wilyUE/edit?usp=sharing") return;
             try {
                 await fetch(API_URL, {
                     method: 'POST',
